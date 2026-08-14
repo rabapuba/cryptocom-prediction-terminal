@@ -1,0 +1,44 @@
+{
+  "name": "cryptocom-prediction-terminal",
+  "version": "1.0.0",
+  "description": "Live monitoring terminal for Crypto.com 5-minute and 20-minute Prediction Markets",
+  "main": "server/index.ts",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:client": "vite",
+    "build": "tsc -p server/tsconfig.json && vite build",
+    "start": "node dist-server/index.js",
+    "test:api": "tsx server/test-crypto-api.ts"
+  },
+  "keywords": [
+    "crypto",
+    "cryptocom",
+    "prediction-market",
+    "trading-terminal",
+    "realtime",
+    "websocket"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "lucide-react": "^0.395.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2",
+    "vite": "^5.3.1"
+  }
+}
