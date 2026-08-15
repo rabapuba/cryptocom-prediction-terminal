@@ -1,0 +1,17 @@
+{
+  "name": "CryptoPredict Pulse - 5m & 20m Live Price Tracker",
+  "short_name": "CryptoPredict",
+  "description": "Ultra-fast real-time crypto price tracker and round countdown monitor for Polymarket and Crypto.com Predict.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090c13",
+  "theme_color": "#00d2ff",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/neon/512/bullish.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
