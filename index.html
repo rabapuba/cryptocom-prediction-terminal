@@ -1,19 +1,358 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300e676' stroke-width='2'><path d='M3 3v18h18'/><path d='m19 9-5 5-4-4-3 3'/></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Crypto.com Prediction Market Terminal (5m / 20m)</title>
-    <meta name="description" content="Ultra-fast live monitoring terminal for Crypto.com 5-minute and 20-minute Prediction Markets with YES/NO pricing and underlying spot prices." />
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CryptoPredict Live - Real-Time 5m & 20m Price & Prediction Tracker</title>
+  <meta name="description" content="Ultra-fast real-time crypto price tracker and countdown monitor for 5-minute and 20-minute prediction markets (Polymarket, Crypto.com Predict). Zero lag, WebSocket live feed, auto-rollover.">
+  <meta name="theme-color" content="#0a0c10">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark">
+  <div class="app-container">
+    <!-- Header Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand-badge">
+          <div class="pulse-indicator"></div>
+          <span class="brand-title">CRYPTO<span class="brand-highlight">PREDICT</span></span>
+          <span class="brand-tag">PULSE</span>
+        </div>
+        <div class="connection-status" id="connectionStatus" title="WebSocket Feed Status">
+          <span class="status-dot connected"></span>
+          <span class="status-text" id="statusText">LIVE WS</span>
+          <span class="ping-badge" id="pingBadge">12ms</span>
+        </div>
+      </div>
+
+      <!-- Coin Selector Tabs -->
+      <div class="coin-selector-wrapper">
+        <div class="coin-selector" id="coinSelector">
+          <button class="coin-btn active" data-coin="BTC" data-pair="BTCUSDT">
+            <span class="coin-icon btc">₿</span>
+            <span class="coin-name">BTC</span>
+            <span class="coin-mini-price" id="miniPrice-BTC">--</span>
+          </button>
+          <button class="coin-btn" data-coin="ETH" data-pair="ETHUSDT">
+            <span class="coin-icon eth">Ξ</span>
+            <span class="coin-name">ETH</span>
+            <span class="coin-mini-price" id="miniPrice-ETH">--</span>
+          </button>
+          <button class="coin-btn" data-coin="SOL" data-pair="SOLUSDT">
+            <span class="coin-icon sol">◎</span>
+            <span class="coin-name">SOL</span>
+            <span class="coin-mini-price" id="miniPrice-SOL">--</span>
+          </button>
+          <button class="coin-btn" data-coin="XRP" data-pair="XRPUSDT">
+            <span class="coin-icon xrp">✕</span>
+            <span class="coin-name">XRP</span>
+            <span class="coin-mini-price" id="miniPrice-XRP">--</span>
+          </button>
+          <button class="coin-btn" data-coin="DOGE" data-pair="DOGEUSDT">
+            <span class="coin-icon doge">Ð</span>
+            <span class="coin-name">DOGE</span>
+            <span class="coin-mini-price" id="miniPrice-DOGE">--</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Actions / Audio Toggle -->
+      <div class="header-right">
+        <button class="btn-icon" id="soundToggle" title="Toggle Audio Chimes (30s & 10s alerts)">
+          <svg class="icon-sound-on" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg class="icon-sound-off hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+          <span class="audio-label">SOUND</span>
+        </button>
+
+        <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" class="btn-polymarket-link" title="Open Polymarket">
+          <span>Polymarket</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <main class="main-content">
+      <!-- Timeframe Selector Bar -->
+      <section class="timeframe-bar">
+        <div class="timeframe-label-group">
+          <span class="tf-title">PREDICTION ROUND DURATION:</span>
+          <span class="tf-subtitle">Syncs auto-rollover to exact clock boundaries</span>
+        </div>
+        <div class="timeframe-buttons" id="timeframeSelector">
+          <button class="tf-btn active" data-minutes="5">
+            <span class="tf-tag">FAST</span>
+            <span class="tf-time">5 MIN</span>
+          </button>
+          <button class="tf-btn" data-minutes="15">
+            <span class="tf-time">15 MIN</span>
+          </button>
+          <button class="tf-btn" data-minutes="20">
+            <span class="tf-tag special">POPULAR</span>
+            <span class="tf-time">20 MIN</span>
+          </button>
+          <button class="tf-btn" data-minutes="60">
+            <span class="tf-time">1 HOUR</span>
+          </button>
+          <button class="tf-btn" data-minutes="120">
+            <span class="tf-time">2 HOURS</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Primary Metrics Cards -->
+      <section class="metrics-grid">
+        <!-- Live Spot Price Card -->
+        <div class="card metric-card live-price-card" id="livePriceCard">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-label">CURRENT SPOT PRICE</span>
+              <span class="exchange-badge">BINANCE REALTIME WS</span>
+            </div>
+            <span class="tick-speed" id="tickSpeed">0 ticks/s</span>
+          </div>
+          <div class="price-display-wrapper">
+            <div class="main-price" id="currentPrice">$0.00</div>
+            <div class="price-sub-row">
+              <div class="delta-badge" id="priceDeltaBadge">
+                <span class="delta-arrow" id="deltaArrow">▲</span>
+                <span class="delta-value" id="deltaValue">+$0.00</span>
+                <span class="delta-percent" id="deltaPercent">(+0.00%)</span>
+              </div>
+              <span class="vs-strike-text">vs Round Strike</span>
+            </div>
+          </div>
+          <div class="velocity-bar-container">
+            <div class="velocity-bar-fill" id="velocityBar"></div>
+          </div>
+        </div>
+
+        <!-- Strike / Open Price Card -->
+        <div class="card metric-card strike-price-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-label">ROUND STRIKE / OPEN PRICE</span>
+              <span class="period-badge" id="periodRangeBadge">--:-- ➔ --:--</span>
+            </div>
+            <button class="btn-micro" id="manualStrikeBtn" title="Manually lock in current price as strike">Lock Current</button>
+          </div>
+          <div class="strike-display-wrapper">
+            <div class="strike-price" id="strikePrice">$0.00</div>
+            <div class="strike-meta-row">
+              <div class="round-id-tag">Round: <span id="roundNumberTag">#--</span></div>
+              <div class="strike-time-tag">Locked at: <span id="strikeLockedTime">--:--:--</span></div>
+            </div>
+          </div>
+          <div class="target-levels">
+            <div class="level-item up">
+              <span class="lvl-name">UP TARGET (&ge; STRIKE)</span>
+              <span class="lvl-val" id="targetUpPrice">$0.00</span>
+            </div>
+            <div class="level-item down">
+              <span class="lvl-name">DOWN TARGET (&lt; STRIKE)</span>
+              <span class="lvl-val" id="targetDownPrice">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Countdown & Rollover Card -->
+        <div class="card metric-card countdown-card" id="countdownCard">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-label">ROUND EXPIRATION COUNTDOWN</span>
+              <span class="auto-rollover-badge">AUTO-ROLLOVER ON</span>
+            </div>
+            <span class="current-time-clock" id="currentClock">--:--:-- UTC</span>
+          </div>
+
+          <div class="countdown-display-wrapper">
+            <div class="countdown-timer" id="countdownTimer">
+              <span class="timer-digits" id="timerMinutes">00</span><span class="timer-colon">:</span><span class="timer-digits" id="timerSeconds">00</span><span class="timer-ms" id="timerMs">.0</span>
+            </div>
+            <div class="timer-progress-bg">
+              <div class="timer-progress-fill" id="timerProgressFill"></div>
+            </div>
+          </div>
+
+          <div class="round-status-banner" id="roundStatusBanner">
+            <div class="prediction-outcome-pill" id="outcomePill">
+              <span class="outcome-icon" id="outcomeIcon">▲</span>
+              <span class="outcome-text" id="outcomeText">UP IS WINNING</span>
+            </div>
+            <span class="round-expiry-label" id="expiryLabel">Resolves at --:--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Real-Time Tick Chart & Momentum Visualizer -->
+      <section class="chart-section">
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div class="chart-title-left">
+              <div class="chart-title">REAL-TIME TICK STREAM &amp; STRIKE COMPARATOR</div>
+              <div class="chart-stats">
+                <span class="stat-pill"><span class="label">HIGH:</span> <span class="val" id="chartHighPrice">$0.00</span></span>
+                <span class="stat-pill"><span class="label">LOW:</span> <span class="val" id="chartLowPrice">$0.00</span></span>
+                <span class="stat-pill"><span class="label">SPREAD:</span> <span class="val" id="chartSpread">$0.00</span></span>
+              </div>
+            </div>
+
+            <div class="chart-controls">
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot price-dot"></span> Live Tick</span>
+                <span class="legend-item"><span class="legend-line strike-line-sample"></span> Strike Baseline</span>
+              </div>
+              <button class="btn-micro" id="clearChartBtn" title="Reset Chart Zoom">Reset View</button>
+            </div>
+          </div>
+
+          <!-- Canvas High Performance Chart -->
+          <div class="canvas-container" id="canvasContainer">
+            <canvas id="tickCanvas"></canvas>
+            <div class="chart-overlay-info" id="chartOverlayInfo">
+              <div class="chart-live-badge" id="chartLiveBadge">
+                <span class="pulse-dot"></span>
+                <span id="chartLivePrice">$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price Momentum & Velocity Gauge -->
+          <div class="momentum-gauge-bar">
+            <div class="gauge-side down-side">
+              <span class="side-title">BEAR PRESSURE</span>
+              <span class="side-pct" id="bearPercent">50%</span>
+            </div>
+            <div class="gauge-slider-track">
+              <div class="gauge-slider-fill" id="momentumGaugeFill" style="width: 50%;"></div>
+              <div class="gauge-center-line"></div>
+            </div>
+            <div class="gauge-side up-side">
+              <span class="side-pct" id="bullPercent">50%</span>
+              <span class="side-title">BULL PRESSURE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Split: Round History & Polymarket Quick Calculator -->
+      <section class="bottom-grid">
+        <!-- Round History Ledger -->
+        <div class="card history-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-label">COMPLETED ROUND HISTORY</span>
+              <span class="history-count-badge" id="historyCount">0 Rounds</span>
+            </div>
+            <button class="btn-micro" id="clearHistoryBtn">Clear Log</button>
+          </div>
+          <div class="history-table-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>ROUND</th>
+                  <th>PERIOD</th>
+                  <th>STRIKE</th>
+                  <th>CLOSE</th>
+                  <th>DELTA</th>
+                  <th>RESULT</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr class="empty-row">
+                  <td colspan="6">Rounds will automatically record here when countdown completes...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Polymarket Prediction Trade Assistant / Simulator -->
+        <div class="card assistant-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-label">PREDICTION TRADING CALCULATOR</span>
+              <span class="exchange-badge">POLYMARKET / CRYPTO.COM</span>
+            </div>
+          </div>
+          <div class="calculator-body">
+            <div class="calc-input-row">
+              <div class="calc-field">
+                <label for="calcContractPrice">Your Entry Price (cents / share):</label>
+                <div class="input-with-suffix">
+                  <input type="number" id="calcContractPrice" value="52" min="1" max="99" step="1">
+                  <span class="suffix">¢</span>
+                </div>
+              </div>
+              <div class="calc-field">
+                <label for="calcPositionSize">Bet Size (USDC / $):</label>
+                <div class="input-with-suffix">
+                  <span class="prefix">$</span>
+                  <input type="number" id="calcPositionSize" value="100" min="1" step="10">
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-results-grid">
+              <div class="calc-res-item">
+                <span class="calc-res-label">Shares Bought</span>
+                <span class="calc-res-val" id="calcShares">192.3</span>
+              </div>
+              <div class="calc-res-item profit">
+                <span class="calc-res-label">Potential Payout</span>
+                <span class="calc-res-val" id="calcPayout">$192.30</span>
+              </div>
+              <div class="calc-res-item profit-net">
+                <span class="calc-res-label">Net Profit</span>
+                <span class="calc-res-val" id="calcProfit">+$92.30 (+92.3%)</span>
+              </div>
+            </div>
+
+            <div class="quick-links-group">
+              <a href="https://web.crypto.com/explore/predict/events/crypto" target="_blank" rel="noopener noreferrer" class="link-btn crypto-com-btn">
+                <span>Crypto.com Predict Events</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+              <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" class="link-btn polymarket-btn">
+                <span>Polymarket 5m/15m/Hourly Markets</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>CryptoPredict Pulse &copy; 2026</span>
+        <span class="separator">•</span>
+        <span>Ultra-Low Latency Prediction Assistant</span>
+      </div>
+      <div class="footer-right">
+        <span class="sync-indicator">Auto-Rollover: <strong class="text-green">ENABLED</strong></span>
+        <span class="separator">•</span>
+        <span id="systemClockLocal">Local: --:--:--</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
 </html>
